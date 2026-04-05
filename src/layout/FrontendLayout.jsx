@@ -38,7 +38,7 @@ function FrontendLayout() {
         <Outlet />
       </main>
       <footer className="text-center mt-5">
-        &copy; HexSchool React - 第六週作業
+        &copy; HexSchool React - 第七週作業
       </footer>
     </>
   );
