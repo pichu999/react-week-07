@@ -15,6 +15,7 @@ function Checkout() {
   const [loadingCardId, setLoadingCardId] = useState(null);
   const [loadingProductId, setLoadingProductId] = useState(null);
   const productModalRef = useRef(null);
+  const isCartEmpty = !cart?.carts || cart.carts.length === 0;
 
   useEffect(() => {
     const getProducts = async () => {
@@ -131,6 +132,10 @@ function Checkout() {
   } = useForm({ mode: "onChange" });
 
   const onSubmit = async (formData) => {
+    if (isCartEmpty) {
+      alert("購物車內無商品，無法送出訂單");
+      return;
+    }
     try {
       const data = {
         user: formData,
@@ -218,71 +223,81 @@ function Checkout() {
           type="button"
           className="btn btn-outline-danger"
           onClick={() => delAllCart()}
-          disabled={!cart?.carts || cart.carts.length === 0}
+          disabled={isCartEmpty}
         >
           清空購物車
         </button>
       </div>
-      <table className="table">
-        <thead>
-          <tr>
-            <th scope="col"></th>
-            <th scope="col">品名</th>
-            <th scope="col">數量/單位</th>
-            <th scope="col" className="text-end">
-              小計
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {cart?.carts.map((cartItem) => (
-            <tr key={cartItem.id}>
-              <td>
-                <button
-                  type="button"
-                  className="btn btn-outline-danger btn-sm"
-                  onClick={() => delCart(cartItem.id)}
-                >
-                  刪除
-                </button>
-              </td>
-              <th scope="row">{cartItem.product.title}</th>
-              <td>
-                <div className="input-group input-group-sm mb-3">
-                  <input
-                    type="number"
-                    className="form-control"
-                    aria-label="Sizing example input"
-                    aria-describedby="inputGroup-sizing-sm"
-                    defaultValue={cartItem.qty}
-                    onChange={(e) =>
-                      updateCart(
-                        cartItem.id,
-                        cartItem.product_id,
-                        Number(e.target.value),
-                      )
-                    }
-                  />
-                  <span className="input-group-text" id="inputGroup-sizing-sm">
-                    {cartItem.product.unit}
-                  </span>
-                </div>
-              </td>
-              <td className="text-end">
-                {cartItem.final_total.toLocaleString()}
-              </td>
+      {isCartEmpty ? (
+        <div colSpan="4" className="text-center py-5 text-secondary">
+          目前購物車是空的，快去選購吧！
+        </div>
+      ) : (
+        <table className="table">
+          <thead>
+            <tr>
+              <th scope="col"></th>
+              <th scope="col">品名</th>
+              <th scope="col">數量/單位</th>
+              <th scope="col" className="text-end">
+                小計
+              </th>
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td className="text-end" colSpan="3">
-              總計
-            </td>
-            <td className="text-end">$NT {cart?.total.toLocaleString()}</td>
-          </tr>
-        </tfoot>
-      </table>
+          </thead>
+          <tbody>
+            {cart?.carts.map((cartItem) => (
+              <tr key={cartItem.id}>
+                <td>
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger btn-sm"
+                    onClick={() => delCart(cartItem.id)}
+                  >
+                    刪除
+                  </button>
+                </td>
+                <th scope="row">{cartItem.product.title}</th>
+                <td>
+                  <div className="input-group input-group-sm mb-3">
+                    <input
+                      type="number"
+                      className="form-control"
+                      aria-label="Sizing example input"
+                      aria-describedby="inputGroup-sizing-sm"
+                      defaultValue={cartItem.qty}
+                      onChange={(e) =>
+                        updateCart(
+                          cartItem.id,
+                          cartItem.product_id,
+                          Number(e.target.value),
+                        )
+                      }
+                    />
+                    <span
+                      className="input-group-text"
+                      id="inputGroup-sizing-sm"
+                    >
+                      {cartItem.product.unit}
+                    </span>
+                  </div>
+                </td>
+                <td className="text-end">
+                  {cartItem.final_total.toLocaleString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td className="text-end" colSpan="3">
+                總計
+              </td>
+              <td className="text-end">$NT {cart?.total.toLocaleString()}</td>
+            </tr>
+          </tfoot>
+        </table>
+      )}
+
       {/* 結帳頁面 */}
       <div className="my-5 row justify-content-center">
         <form className="col-md-6" onSubmit={handleSubmit(onSubmit)}>

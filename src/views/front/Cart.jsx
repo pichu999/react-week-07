@@ -6,6 +6,8 @@ const API_PATH = import.meta.env.VITE_API_PATH;
 
 function Cart() {
   const [cart, setCart] = useState();
+  const isCartEmpty = !cart?.carts || cart.carts.length === 0;
+
   const getCart = async () => {
     try {
       const res = await axios.get(`${API_BASE}/api/${API_PATH}/cart`);
@@ -69,7 +71,7 @@ function Cart() {
           type="button"
           className="btn btn-outline-danger"
           onClick={() => delAllCart()}
-          disabled={!cart?.carts || cart.carts.length === 0}
+          disabled={isCartEmpty}
         >
           清空購物車
         </button>
