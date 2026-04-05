@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
@@ -10,6 +11,8 @@ function Login(getProducts, setIsAuth) {
     username: "",
     password: "",
   });
+
+  const navigate = useNavigate();
 
   const {
     register,
@@ -34,6 +37,7 @@ function Login(getProducts, setIsAuth) {
       const { token, expired } = response.data;
       document.cookie = `hexToken=${token};expires=${new Date(expired)};`;
       axios.defaults.headers.common["Authorization"] = token;
+      navigate("/admin/products");
       // setIsAuth(true);
       // getProducts();
     } catch (error) {

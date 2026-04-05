@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 
 import * as bootstrap from "bootstrap";
-import "./assets/style.css";
-import ProductModal from "./components/ProductModal";
-import Pagination from "./components/Pagination";
+import Pagination from "../../components/Pagination";
+import ProductModal from "../../components/ProductModal";
+import { useDispatch } from "react-redux";
+import { createAsyncMessage } from "../../slice/messageSlice";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
@@ -22,25 +23,14 @@ const INITIAL_TEMPLATE_DATA = {
   imagesUrl: [],
 };
 
-function App1() {
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-  });
+function AdminProducts() {
   const [isAuth, setIsAuth] = useState(false);
   const [products, setProducts] = useState([]);
   const [templateProduct, setTemplateProduct] = useState(INITIAL_TEMPLATE_DATA);
   const [modalType, setModalType] = useState("");
   const [pagination, setPagination] = useState({});
   const productModalRef = useRef(null);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((preData) => ({
-      ...preData,
-      [name]: value,
-    }));
-  };
+  const dispatch = useDispatch();
 
   const handleModalInputChange = (e) => {
     const { name, value, checked, type } = e.target;
@@ -99,21 +89,6 @@ function App1() {
     });
   };
 
-  const onSubmit = async (e) => {
-    e.preventDefault(); //停止原生預設事件
-    try {
-      const response = await axios.post(`${API_BASE}/admin/signin`, formData);
-      const { token, expired } = response.data;
-      document.cookie = `hexToken=${token};expires=${new Date(expired)};`;
-      axios.defaults.headers.common["Authorization"] = token;
-      setIsAuth(true);
-      getProducts();
-    } catch (error) {
-      setIsAuth(false);
-      alert(error.response.data.message);
-    }
-  };
-
   useEffect(() => {
     // 讀取 Cookie
     const token = document.cookie
@@ -130,12 +105,12 @@ function App1() {
 
     const checkLogin = async () => {
       try {
-        await axios.post(`${API_BASE}/api/user/check`);
-        alert("登入成功");
+        const response = await axios.post(`${API_BASE}/api/user/check`);
+        dispatch(createAsyncMessage(response.data));
         setIsAuth(true);
         getProducts();
       } catch (error) {
-        alert(error.response.data.message);
+        dispatch(createAsyncMessage(error.response.data));
       }
     };
 
@@ -163,7 +138,7 @@ function App1() {
       setProducts(response.data.products);
       setPagination(response.data.pagination);
     } catch (error) {
-      alert(error.response.data.message);
+      dispatch(createAsyncMessage(error.response.data));
     }
   };
 
@@ -188,21 +163,24 @@ function App1() {
 
     try {
       const response = await axios[method](url, productData);
-      alert(response.data.message);
+      dispatch(createAsyncMessage(response.data));
       getProducts();
       closeModal();
     } catch (error) {
-      alert(error.response.data.message);
+      dispatch(createAsyncMessage(error.response.data));
     }
   };
 
   const deleteProduct = async (id) => {
     try {
-      await axios.delete(`${API_BASE}/api/${API_PATH}/admin/product/${id}`);
+      const response = await axios.delete(
+        `${API_BASE}/api/${API_PATH}/admin/product/${id}`,
+      );
+      dispatch(createAsyncMessage(response.data));
       getProducts();
       closeModal();
     } catch (error) {
-      alert(error.response.data.message);
+      dispatch(createAsyncMessage(error.response.data));
     }
   };
 
@@ -230,103 +208,68 @@ function App1() {
 
   return (
     <>
-      {!isAuth ? (
-        <div className="container login">
-          <h1>請先登入</h1>
-          <form className="form-floating" onSubmit={(e) => onSubmit(e)}>
-            <div className="form-floating mb-3">
-              <input
-                type="email"
-                className="form-control"
-                name="username"
-                placeholder="name@example.com"
-                value={formData.username}
-                onChange={(e) => handleInputChange(e)}
-              />
-              <label htmlFor="username">Email address</label>
-            </div>
-            <div className="form-floating">
-              <input
-                type="password"
-                className="form-control"
-                name="password"
-                placeholder="Password"
-                value={formData.password}
-                onChange={(e) => handleInputChange(e)}
-              />
-              <label htmlFor="password">Password</label>
-            </div>
-            <button type="submit" className="btn btn-primary w-100 mt-2">
-              登入
-            </button>
-          </form>
+      <div className="container">
+        <div className="text-end mt-4">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => openModal("create", INITIAL_TEMPLATE_DATA)}
+          >
+            建立新的產品
+          </button>
         </div>
-      ) : (
-        <div className="container">
-          <div className="text-end mt-4">
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => openModal("create", INITIAL_TEMPLATE_DATA)}
-            >
-              建立新的產品
-            </button>
-          </div>
-          <h2>產品列表</h2>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>分類</th>
-                <th>產品名稱</th>
-                <th>原價</th>
-                <th>售價</th>
-                <th>是否啟用</th>
-                <th>編輯</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.category}</td>
-                  <td className="fw-bold">{item.title}</td>
-                  <td>{item.origin_price}</td>
-                  <td>{item.price}</td>
-                  <td
-                    className={`${item.is_enabled && "text-success"} fw-bold`}
+        <h2>產品列表</h2>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>分類</th>
+              <th>產品名稱</th>
+              <th>原價</th>
+              <th>售價</th>
+              <th>是否啟用</th>
+              <th>編輯</th>
+            </tr>
+          </thead>
+          <tbody>
+            {products.map((item) => (
+              <tr key={item.id}>
+                <td>{item.category}</td>
+                <td className="fw-bold">{item.title}</td>
+                <td>{item.origin_price}</td>
+                <td>{item.price}</td>
+                <td className={`${item.is_enabled && "text-success"} fw-bold`}>
+                  {item.is_enabled ? "啟用" : "未啟用"}
+                </td>
+                <td>
+                  <div
+                    className="btn-group"
+                    role="group"
+                    aria-label="Basic example"
                   >
-                    {item.is_enabled ? "啟用" : "未啟用"}
-                  </td>
-                  <td>
-                    <div
-                      className="btn-group"
-                      role="group"
-                      aria-label="Basic example"
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary btn-sm"
+                      onClick={() => openModal("edit", item)}
                     >
-                      <button
-                        type="button"
-                        className="btn btn-outline-primary btn-sm"
-                        onClick={() => openModal("edit", item)}
-                      >
-                        編輯
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-outline-danger btn-sm"
-                        onClick={() => {
-                          openModal("delete", item);
-                        }}
-                      >
-                        刪除
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pagination pagination={pagination} onChangePage={getProducts} />
-        </div>
-      )}
+                      編輯
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger btn-sm"
+                      onClick={() => {
+                        openModal("delete", item);
+                      }}
+                    >
+                      刪除
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Pagination pagination={pagination} onChangePage={getProducts} />
+      </div>
       <ProductModal
         modalType={modalType}
         templateProduct={templateProduct}
@@ -343,4 +286,4 @@ function App1() {
   );
 }
 
-export default App1;
+export default AdminProducts;
