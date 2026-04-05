@@ -128,6 +128,7 @@ function Checkout() {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm({ mode: "onChange" });
 
@@ -144,6 +145,9 @@ function Checkout() {
       const res = await axios.post(`${API_BASE}/api/${API_PATH}/order`, {
         data,
       });
+      alert("成功送出訂單");
+
+      reset();
       const cartRes = await axios.get(`${API_BASE}/api/${API_PATH}/cart`);
       setCart(cartRes.data.data);
     } catch {
