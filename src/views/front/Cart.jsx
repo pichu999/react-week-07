@@ -69,6 +69,7 @@ function Cart() {
           type="button"
           className="btn btn-outline-danger"
           onClick={() => delAllCart()}
+          disabled={!cart?.carts || cart.carts.length === 0}
         >
           清空購物車
         </button>
